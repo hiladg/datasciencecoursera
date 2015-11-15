@@ -1,0 +1,132 @@
+---
+title: "PeerProcessing1"
+author: "HG"
+date: "12 November 2015"
+output: 
+  html_document:
+    keep_md: yes
+---
+
+##Loading and preprocessing the data
+
+*For the first part I just make summary of steps per day*
+
+
+```{r}
+    setwd ("C:/Users/hila_000/Documents/MarkDown")
+    DSActivity <- read.csv("activity.csv")
+```
+
+
+## What is mean total number of steps taken per day?
+
+
+For this part of the assignment, you can ignore the missing values in the dataset.
+
+Make a histogram of the total number of steps taken each day
+
+Calculate and report the mean and median total number of steps taken per day
+
+```{r question 1}
+    library(data.table)
+    
+    df <- aggregate(steps ~ date, DSActivity, sum)
+    head (df)
+    hist (df$steps, main = 'Total number of steps taken each day', xlab = "steps")
+
+```
+  
+  
+The mean total number of steps taken  per day is `r round (mean (df$steps))`
+The median total number of steps taken each day is `r median(df$steps)`
+
+## What is the average daily activity pattern?
+
+Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
+
+
+
+```{r question 2}
+
+    df2 <- aggregate(steps ~ interval, DSActivity, mean)
+    plot (df2, type = "l")
+
+```
+  
+  
+Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?  
+
+That happens at interval `r which.max (df2$steps)` with the value of `r max (df2$steps)` steps
+
+
+## Imputing missing values
+
+Note that there are a number of days/intervals where there are missing values (coded as NA). The presence of missing days may introduce bias into some calculations or summaries of the data.
+
+Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with NAs)  
+
+**The total number of missing values in the dataset is `r sum(is.na(DSActivity$steps))`**
+
+Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. 
+** I've decided to use the the mean for that 5-minute interval**
+
+Create a new dataset that is equal to the original dataset but with the missing data filled in.
+
+```{r question 3}
+    DSNoNull <- DSActivity
+    
+    for (i in 1:nrow(DSNoNull))
+      {
+        if (is.na(DSNoNull[i, "steps"])==TRUE)
+          {
+              x <- df2[df2$interval== DSNoNull[i, "interval"], "steps"]
+              
+              DSNoNull[i, "steps"] <- x
+          }
+      }
+
+
+```
+
+Make a histogram of the total number of steps taken each day  
+
+
+```{r question 3b}
+
+  dfPerDay2 <- aggregate(steps ~ date, DSNoNull, sum)
+  
+  hist (dfPerDay2$steps, main = 'Total number of steps taken each day, NA replaced with average',
+        xlab = "steps")
+
+```
+  
+
+The new values in the dataset,  NA was replaced with an average taken per day, are: 
+The mean total number of steps is `r (mean (dfPerDay2$steps))`  
+
+The median total number of steps taken each day is `r median(dfPerDay2$steps)` 
+
+The original numbers are : `r round (mean (df$steps))` for the mean and `r median(df$steps)` for the median, so since I replaced the mean with a mean, the difference is negligble
+
+  
+ 
+## Are there differences in activity patterns between weekdays and weekends?
+
+For this part the weekdays() function may be of some help here. Use the dataset with the filled-in missing values for this part.
+**I've added the weekday using a different function, and created the factors a bit differently**
+
+Create a new factor variable in the dataset with two levels -- "weekday" and "weekend" indicating whether a given date is a weekday or weekend day.
+
+Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). 
+
+```{r question 4}
+    newCol = lapply (as.POSIXlt(DSNoNull$date)$wday %% 6 == 0 , factor, 
+                         levels= c (TRUE, FALSE), labels = c("weekend","weekdays"))
+                         
+    DSNoNull$WhichDay <- newCol
+```
+
+**I am very sorry but I couldn't produce the plot by factors**
+```{r question 4 plot}
+    plot (DSNoNull$interval, DSNoNull$steps,  type = "l")
+```    
